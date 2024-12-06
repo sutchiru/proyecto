@@ -167,57 +167,41 @@ def desviacion_estandar(vals_in):
         if math.isfinite(v):
             vals.append(v)
 
-    return varianza(vals_in)**(1/2)
+    return varianza(vals) ** (0.5)
 
-def percentil(vals_in,q,interpolacion="lineal"):
+def percentil(vals_in, q, interpolacion="lineal"):
     """
-    Calcula el percentil de una lista de numeros
-    Detecta y elimina valores NaN
+    Calcula el percentil de una lista de números. Ignora valores NaN.
     
-    Paràmetros
-    ----------
-    vals: lista
-        lista con los numeros
-        
-    Retorna
-    -------
-    percentil:float
-        percentil de los numeros (excluyendo NaNs)
+    Parámetros:
+    -----------
+    vals_in: list
+        Lista con los números.
+    q: float
+        Percentil a calcular (entre 0 y 100).
+    interpolacion: str
+        Método de interpolación ("lineal" es el único implementado).
+    
+    Retorna:
+    --------
+    percentil: float
+        Percentil de los números (excluyendo NaNs).
     """
-    
-    
-    #eliminamos los valores que sean NaNs
-    vals=[]
-    for v in vals_in:
-        if math.isfinite(v):
-            vals.append(v)
+    # Eliminar valores NaN
+    vals = [v for v in vals_in if math.isfinite(v)]
+    vals.sort()  # Ordenar la lista
 
-    # Ordenar la lista dada como input in-place
-    vals.sort()
+    if interpolacion == "lineal":
+        # Índice efectivo
+        ieff = (len(vals) - 1) * (q / 100)
+        i = int(ieff)  # Índice inferior
+        j = min(i + 1, len(vals) - 1)  # Índice superior, limitado al último índice
+        fraction = ieff - i  # Parte fraccional del índice
 
-    if interpolacion=="lineal":
-        #Distancia entre el primer y ultimo elemtno,
-        #a ki kargi del eje de indices
-        dist=len(vals)-1
-
-        #calcular el indice efectio del percentil
-        ieff=dist*q/100
-        
-        #parte fraccional
-        fraction=ieff-int(ieff)
-        
-        #indice inferior
-        i=int((ieff)//1)
-        j=i+1
-
-        #La interoplacion lineal se implementa con
-        # val_inf + (val_sup)- val_inf)*fraction,
-        percentile=vals[i]+vals[j]-vals[i]*fraction
-
+        # Interpolación lineal
+        percentile = vals[i] + (vals[j] - vals[i]) * fraction
         return percentile
-        
-        percentile=vals
-        
+
 def iqr(vals_in):
     
     """
@@ -235,6 +219,7 @@ def iqr(vals_in):
     for v in vals_in:
         if math.isfinite(v):
             vals.append(v)
+            
     iqr= percentil(vals,75)-percentil(vals,25)
     return iqr
 
@@ -296,25 +281,27 @@ def covarianza(x,y):
     covarianza= sum(tt)/len(tt)
     return covarianza 
             
-def correlacion(x,y):
+def correlacion(x, y):
     """
-    calcula la correlación de una lista de valores, ignora valores NaN
-    
-    Parámetros
+    Calcula la correlación de Pearson entre dos listas de valores. Ignora valores NaN.
+    Parámetros:
     -----------
-    x,y: list
-        lista de números
-    Retorna
-    -------
+    x, y: list
+        Listas de valores numéricos. Deben tener la misma longitud.
+    Retorna:
+    --------
     correlacion: float
-        covarianza de los valores
+        Coeficiente de correlación de Pearson.
     """
-    x_vals=[]
-    y_vals=[]
-    for i in range(len(x)):
-        if math.isfinite(x[i]) & math.isfinite(y[i]):
-            x_vals.append(x[i])
-            y_vals.append(y[i])
-            
-    rxy = covarianza(x,y)/( varianza(x) * varianza(y) )
-    return rxy                        
+    x_vals, y_vals = [], []
+    for xi, yi in zip(x, y):
+        if math.isfinite(xi) and math.isfinite(yi):
+            x_vals.append(xi)
+            y_vals.append(yi)
+    
+    cov = covarianza(x_vals, y_vals)
+    std_x = desviacion_estandar(x_vals)
+    std_y = desviacion_estandar(y_vals)
+    
+    return cov / (std_x * std_y)
+             
