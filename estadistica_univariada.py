@@ -1,24 +1,33 @@
 import math
+
 def promedio(lista):
     """
-    calcula el promedio de una lista.
+    Calcula el promedio de una lista de números, ignorando valores no finitos,
+    con mayor precisión en la suma para minimizar errores de punto flotante.
     
-    parametros:
-    -------------
-    lista: lista de variables aleatorias
+    Parámetros:
+    -----------
+    lista: list
+        Lista de variables aleatorias.
     
-    retorna:
-    ------------
-    promedio : float
+    Retorna:
+    --------
+    promedio: float
+        El promedio de los valores finitos en la lista.
     """
-    
-    vals= []
+    vals = []
     for v in lista:
         if math.isfinite(v):
             vals.append(v)
-        
-    promedio=sum(vals)/len(vals)
-    return promedio
+
+    
+    suma = 0.0
+    for val in vals:
+        suma += val
+
+    
+    return suma / len(vals) if vals else float('nan')
+
 
 def mediana(vals_in):
     
@@ -31,8 +40,8 @@ def mediana(vals_in):
     lista de categotias
     Retorna
     -------
-    moda: str
-    la moda de la muestra
+    mediana: str
+    la mediana de la muestra
     """
     #se eliminan valores que sean NaNs
     vals=[]
@@ -149,7 +158,6 @@ def varianza(vals_in):
     return varianza
         
 def desviacion_estandar(vals_in):
-    
     """
     calcula desviacion estandar de una lista de numeros
     Parametros
@@ -162,13 +170,18 @@ def desviacion_estandar(vals_in):
         desviacion de los valores (excluye NaNs)
     """
     
-    vals=[]
+    vals = []
     for v in vals_in:
         if math.isfinite(v):
             vals.append(v)
-
-    return varianza(vals) ** (0.5)
-
+    prom = promedio(vals)
+    # estimamos las desviaciones cuadraticas medias
+    dcm = []
+    for i in vals:
+        dcm.append((i - prom) ** 2)
+    varianza = sum(dcm) / len(vals)  # Dividir por n (población completa)
+    return varianza ** (1 / 2)
+    
 def percentil(vals_in, q, interpolacion="lineal"):
     """
     Calcula el percentil de una lista de números. Ignora valores NaN.
@@ -188,15 +201,19 @@ def percentil(vals_in, q, interpolacion="lineal"):
         Percentil de los números (excluyendo NaNs).
     """
     # Eliminar valores NaN
-    vals = [v for v in vals_in if math.isfinite(v)]
+    vals=[]
+    for v in vals_in:
+        if math.isfinite(v):
+            vals.append(v)
+
     vals.sort()  # Ordenar la lista
 
     if interpolacion == "lineal":
-        # Índice efectivo
+        
         ieff = (len(vals) - 1) * (q / 100)
-        i = int(ieff)  # Índice inferior
-        j = min(i + 1, len(vals) - 1)  # Índice superior, limitado al último índice
-        fraction = ieff - i  # Parte fraccional del índice
+        i = int(ieff) 
+        j = min(i + 1, len(vals) - 1)  
+        fraction = ieff - i  
 
         # Interpolación lineal
         percentile = vals[i] + (vals[j] - vals[i]) * fraction
@@ -275,12 +292,14 @@ def covarianza(x,y):
             
     xmean= promedio(x_vals)
     ymean= promedio(y_vals)
-    tt=[]                    
-    for xv, yv in zip(x,y):
-        tt.append((xv-xmean)*(yv-ymean))
-    covarianza= sum(tt)/len(tt)
-    return covarianza 
-            
+    # Calcular la covarianza
+    sum_cov = sum((xi - xmean) * (yi - ymean) for xi, yi in zip(x_vals, y_vals))
+    
+    # Covarianza
+    covarianza = sum_cov / (len(x_vals) - 1)  # Si es muestra, usar N-1
+    
+    return covarianza
+
 def correlacion(x, y):
     """
     Calcula la correlación de Pearson entre dos listas de valores. Ignora valores NaN.
